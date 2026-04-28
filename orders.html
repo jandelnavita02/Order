@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Food Shop Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #e0f2f7; /* Light Blue */
+            --panel-bg: #fce4ec; /* Light Pink */
+            --card-bg: #ffffff;
+            --primary-blue: #4db6ac;
+            --accent-pink: #f06292;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background-color: var(--panel-bg);
+            border: 8px solid #444;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .wallet {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 3px solid #444;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        h1 { margin: 0; color: #444; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Main Content Layout */
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Shop Section (Scrollable) */
+        .shop-grid {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 10px;
+            padding-bottom: 20px;
+        }
+
+        .food-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 3px solid #80cbc4;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.1s;
+        }
+
+        .food-card:active { transform: scale(0.95); }
+
+        .food-emoji { font-size: 3rem; margin-bottom: 5px; display: block; }
+        .food-name { font-size: 0.9rem; font-weight: 600; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .food-price { color: #2e7d32; font-weight: 600; margin: 5px 0; }
+
+        .buy-btn {
+            background-color: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Receipt Section */
+        .receipt-panel {
+            flex: 1;
+            background: white;
+            border: 3px dashed #bbb;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .receipt-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: 'Fredoka';
+            font-weight: 600;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .receipt-content {
+            flex: 1;
+            overflow-y: auto;
+            border-top: 2px solid #eee;
+            padding-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .receipt-total {
+            border-top: 2px solid #444;
+            padding-top: 10px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+        }
+
+        /* Footer Buttons */
+        .footer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            font-family: 'Fredoka';
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-undo { background-color: #ef5350; }
+        .btn-reset { background-color: #7e57c2; }
+        .btn-back { background-color: #607d8b; }
+
+        /* Purchases View Overlay */
+        #purchases-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--panel-bg);
+            z-index: 10;
+            border-radius: 22px;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .purchased-items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            border: 3px solid #ccc;
+        }
+
+        .purchased-card {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+
+        /* Scrollbar styling for touch */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <div class="wallet">👛 WALLET: <span id="wallet-amt">500</span> NTD</div>
+        <h1>Food Shop</h1>
+        <div style="width: 100px;"></div> </div>
+
+    <div class="main-layout">
+        <div class="shop-grid" id="shop-grid">
+            </div>
+
+        <div class="receipt-panel">
+            <button class="receipt-btn" onclick="togglePurchases(true)">📋 MY PURCHASES</button>
+            <div style="text-align: center; font-weight: 600; margin-bottom: 5px;">RECEIPT</div>
+            <div class="receipt-content" id="receipt-list">
+                </div>
+            <div class="receipt-total">
+                <span>TOTAL:</span>
+                <span><span id="total-amt">0</span> NTD</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-controls">
+        <button class="control-btn btn-undo" onclick="undoLast()">UNDO LAST</button>
+        <button class="control-btn btn-reset" onclick="resetGame()">RESET ALL</button>
+        <button class="control-btn btn-back" onclick="alert('Going to Homepage...')">BACK</button>
+    </div>
+
+    <div id="purchases-overlay">
+        <div class="header">
+            <h2>MY PURCHASES 🛍️</h2>
+            <button class="receipt-btn" onclick="togglePurchases(false)">⬅ BACK</button>
+        </div>
+        <div class="purchased-items-grid" id="purchased-grid"></div>
+        <div class="wallet" style="margin-top: 15px; text-align: center;">
+            Items Owned: <span id="items-count">0</span> | Budget Left: <span id="budget-left">500</span> NTD
+        </div>
+    </div>
+</div>
+
+<script>
+    const foodItems = [
+        { name: "Bottle of Water", price: 10, img: "💧" },
+        { name: "Orange Juice (Bottle)", price: 25, img: "🧃" },
+        { name: "Apple Juice (Bottle)", price: 25, img: "🧃" },
+        { name: "Black Tea (Bottle)", price: 20, img: "🥤" },
+        { name: "Soda (Can)", price: 20, img: "🥤" },
+        { name: "Milk (Can)", price: 30, img: "🥛" },
+        { name: "Chocolate Drink", price: 35, img: "🍫" },
+        { name: "Dumplings", price: 60, img: "🥟" },
+        { name: "Stinky Tofu", price: 55, img: "🍢" },
+        { name: "Pasta", price: 85, img: "🍝" },
+        { name: "Fried Chicken", price: 95, img: "🍗" },
+        { name: "Eggs", price: 15, img: "🍳" },
+        { name: "Bread", price: 40, img: "🍞" },
+        { name: "Cake", price: 70, img: "🍰" },
+        { name: "Donut", price: 35, img: "🍩" },
+        { name: "Tea (Cup)", price: 25, img: "🍵" },
+        { name: "Coffee (Cup)", price: 45, img: "☕" },
+        { name: "Milk (Cup)", price: 25, img: "🥛" },
+        { name: "Rice (Bowl)", price: 15, img: "🍚" },
+        { name: "Soup (Bowl)", price: 50, img: "🥣" },
+        { name: "Noodles (Bowl)", price: 75, img: "🍜" },
+        { name: "Meatballs (Bowl)", price: 65, img: "🧆" },
+        { name: "Bubble Tea", price: 60, img: "🧋" },
+        { name: "Orange Juice (Glass)", price: 30, img: "🍹" },
+        { name: "Milkshake", price: 80, img: "🥤" },
+        { name: "Water (Glass)", price: 10, img: "🥛" }
+    ];
+
+    let wallet = 500;
+    let total = 0;
+    let myOrders = [];
+
+    function initShop() {
+        const grid = document.getElementById('shop-grid');
+        foodItems.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'food-card';
+            card.innerHTML = `
+                <span class="food-emoji">${item.img}</span>
+                <div class="food-name">${item.name}</div>
+                <div class="food-price">${item.price} NTD</div>
+                <button class="buy-btn" onclick="buyItem(${index})">BUY</button>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function buyItem(index) {
+        const item = foodItems[index];
+        if (wallet >= item.price) {
+            wallet -= item.price;
+            total += item.price;
+            myOrders.push(item);
+            updateUI();
+        } else {
+            alert("Not enough money! 💸");
+        }
+    }
+
+    function undoLast() {
+        if (myOrders.length > 0) {
+            const lastItem = myOrders.pop();
+            wallet += lastItem.price;
+            total -= lastItem.price;
+            updateUI();
+        }
+    }
+
+    function resetGame() {
+        wallet = 500;
+        total = 0;
+        myOrders = [];
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('wallet-amt').innerText = wallet;
+        document.getElementById('total-amt').innerText = total;
+        document.getElementById('items-count').innerText = myOrders.length;
+        document.getElementById('budget-left').innerText = wallet;
+
+        // Update Receipt
+        const list = document.getElementById('receipt-list');
+        list.innerHTML = "";
+        
+        // Count quantities for receipt
+        const counts = {};
+        myOrders.forEach(x => counts[x.name] = (counts[x.name] || 0) + 1);
+        
+        for (const [name, qty] of Object.entries(counts)) {
+            const itemData = foodItems.find(f => f.name === name);
+            const row = document.createElement('div');
+            row.className = 'receipt-item';
+            row.innerHTML = `<span>${qty}x ${name}</span> <span>${itemData.price * qty}</span>`;
+            list.appendChild(row);
+        }
+
+        // Update Purchases Grid
+        const pGrid = document.getElementById('purchased-grid');
+        pGrid.innerHTML = "";
+        myOrders.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'purchased-card';
+            div.innerHTML = `<span style="font-size:2rem">${item.img}</span><br><small>${item.name}</small>`;
+            pGrid.appendChild(div);
+        });
+    }
+
+    function togglePurchases(show) {
+        document.getElementById('purchases-overlay').style.display = show ? 'flex' : 'none';
+    }
+
+    initShop();
+</script>
+
+</body>
+</html>
